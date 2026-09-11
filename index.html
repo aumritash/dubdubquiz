@@ -9,7 +9,13 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Which dubdub sticker are you?">
 <meta property="og:description" content="Bollywood, Puzzle, Sports, Maths, GK. Ten questions. One sticker.">
+<meta property="og:url" content="https://dubdubquiz.vercel.app/">
+<meta property="og:image" content="https://dubdubquiz.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Which dubdub sticker are you? Ten questions, one sticker.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dubdubquiz.vercel.app/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -424,13 +430,18 @@ function post(table, row){
 }
 
 /* IDs are generated here rather than read back, so the anon role never needs
-   SELECT permission on these tables. */
+   SELECT permission on these tables. Kept to 8 base36 characters because the
+   lead id is what a shared link carries: 2.8 trillion values is far more than
+   this ever needs, and it keeps the URL short enough to read out loud. */
+const ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 function uid(){
-  return (crypto.randomUUID && crypto.randomUUID()) ||
-         ("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-           const r = Math.random() * 16 | 0;
-           return (c === "x" ? r : (r & 3 | 8)).toString(16);
-         }));
+  const buf = new Uint8Array(8);
+  if(window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+  else for(let i = 0; i < buf.length; i++) buf[i] = Math.random() * 256;
+
+  let out = "";
+  for(let i = 0; i < buf.length; i++) out += ID_ALPHABET[buf[i] % ID_ALPHABET.length];
+  return out;
 }
 
 /* =========================================================
@@ -562,9 +573,11 @@ const player = { id:"", name:"", contact:"", from:"" };
 let catKey = null, qi = 0, score = 0, locked = false;
 let quizStart = 0, timerHandle = null, elapsedSec = 0;
 
-/* Referral tracking: a shared link carries ?ref=<lead_id>. Log the visit
-   once on load, then attribute the new lead to it when they sign up. */
-const REF = new URLSearchParams(location.search).get("ref") || "";
+/* Referral tracking: a shared link carries ?r=<lead_id>. Log the visit once on
+   load, then attribute the new lead to it when they sign up. Links shared
+   before the switch to ?r= used ?ref=, so both are still honoured. */
+const PARAMS = new URLSearchParams(location.search);
+const REF = PARAMS.get("r") || PARAMS.get("ref") || "";
 if(REF) post("referral_visits", { ref: REF, visit_id: uid() });
 
 function fmtTime(sec){
@@ -751,7 +764,7 @@ const SHARE_URL = "https://dubdubquiz.vercel.app";  // where the share link poin
 const SHARE_CTA = "find your smart here!";       // change the caption line here
 
 function shareLink(){
-  return SHARE_URL + (player.id ? "?ref=" + encodeURIComponent(player.id) : "");
+  return SHARE_URL + (player.id ? "?r=" + encodeURIComponent(player.id) : "");
 }
 
 function caption(){
