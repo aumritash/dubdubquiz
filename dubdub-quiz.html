@@ -319,8 +319,8 @@ button{font:inherit; cursor:pointer; border:none}
       <p class="hint">10-digit phone number, or an email.</p>
     </div>
     <div class="field">
-      <label for="f-from">Where are you from?</label>
-      <input id="f-from" type="text" placeholder="Bengaluru" autocomplete="address-level2">
+      <label for="f-college">Which college do/did you go to?</label>
+      <input id="f-college" type="text" placeholder="Christ University" autocomplete="organization">
     </div>
 
     <p class="err" id="err"></p>
@@ -569,7 +569,7 @@ const CATS = {
    STATE + HELPERS
    ========================================================= */
 const $ = id => document.getElementById(id);
-const player = { id:"", name:"", contact:"", from:"" };
+const player = { id:"", name:"", contact:"", college:"" };
 let catKey = null, qi = 0, score = 0, locked = false;
 let quizStart = 0, timerHandle = null, elapsedSec = 0;
 
@@ -600,7 +600,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 $("go-cats").addEventListener("click", () => {
   const name = $("f-name").value.trim();
   const contact = $("f-contact").value.trim();
-  const from = $("f-from").value.trim();
+  const college = $("f-college").value.trim();
   const err = $("err");
 
   if(!name){ return fail("Add your name to carry on."); }
@@ -613,17 +613,20 @@ $("go-cats").addEventListener("click", () => {
       return fail("Phone number should be exactly 10 digits.");
     }
   }
-  if(!from){ return fail("Tell us which city or state you're from."); }
+  if(!college){ return fail("Tell us which college you go to."); }
 
   err.classList.remove("on");
-  player.name = name; player.contact = contact; player.from = from;
+  player.name = name; player.contact = contact; player.college = college;
   player.id = uid();
 
   post("leads", {
     id: player.id,
     name: player.name,
     contact: player.contact,
-    city: player.from,
+    /* The Apps Script writes a fixed column list and drops anything else, so
+       the college goes into the existing city column until that list is
+       updated and the backend redeployed. */
+    city: player.college,
     is_email: EMAIL.test(player.contact),
     referred_by: REF
   });
@@ -992,7 +995,7 @@ $("copy").addEventListener("click", async () => {
 
 $("again").addEventListener("click", () => show("s-cats"));
 $("restart").addEventListener("click", () => {
-  $("f-name").value = ""; $("f-contact").value = ""; $("f-from").value = "";
+  $("f-name").value = ""; $("f-contact").value = ""; $("f-college").value = "";
   $("err").classList.remove("on");
   show("s-details");
 });
