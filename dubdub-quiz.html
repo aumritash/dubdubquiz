@@ -156,6 +156,7 @@ button{font:inherit; cursor:pointer; border:none}
 .track{flex:1; height:6px; background:var(--surface); border-radius:99px; overflow:hidden}
 .fill{height:100%; width:0; background:var(--primary); border-radius:99px; transition:width .3s ease}
 .count{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.qtimer{font-size:13px; font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums; white-space:nowrap}
 
 .qtag img{width:24px; height:24px; border-radius:7px; object-fit:cover;
   border:1px solid var(--tint); display:block}
@@ -237,6 +238,18 @@ button{font:inherit; cursor:pointer; border:none}
 }
 .line{color:var(--muted); font-size:15px; max-width:34ch; margin:0 auto 26px}
 
+.timer-badge{
+  display:inline-block; margin:-14px auto 22px;
+  padding:6px 15px; border-radius:var(--r-btn);
+  background:var(--surface); color:var(--text);
+  font-size:12.5px; font-weight:700; letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.prize{
+  font-size:13.5px; font-weight:600; color:var(--gold);
+  max-width:32ch; margin:0 auto 14px;
+}
+
 /* --- share --- */
 .btn.share{
   display:flex; align-items:center; justify-content:center; gap:9px;
@@ -297,7 +310,7 @@ button{font:inherit; cursor:pointer; border:none}
     <div class="field">
       <label for="f-contact">Phone or email</label>
       <input id="f-contact" type="text" placeholder="98765 43210 or you@mail.com" autocomplete="email">
-      <p class="hint">Either one works.</p>
+      <p class="hint">10-digit phone number, or an email.</p>
     </div>
     <div class="field">
       <label for="f-from">Where are you from?</label>
@@ -310,7 +323,7 @@ button{font:inherit; cursor:pointer; border:none}
 
   <!-- 2. CATEGORY -->
   <section class="screen" id="s-cats">
-    <h1 id="greet">Pick your lane</h1>
+    <h1 id="greet">Pick your category</h1>
     <p class="sub">Five rounds on the menu. Ten questions each, no going back.</p>
     <div class="cats" id="cat-list"></div>
   </section>
@@ -319,6 +332,7 @@ button{font:inherit; cursor:pointer; border:none}
   <section class="screen" id="s-quiz">
     <div class="qbar">
       <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="qtimer" id="qtimer">0:00</div>
       <div class="count" id="count">1 / 10</div>
     </div>
     <div class="qtag" id="qtag">Bollywood</div>
@@ -334,8 +348,10 @@ button{font:inherit; cursor:pointer; border:none}
       <div class="sc" id="r-score">0/10</div>
     </div>
     <img class="art" id="r-art" alt="" hidden>
+    <div class="timer-badge" id="r-timer"></div>
     <div class="verdict" id="r-verdict"></div>
     <p class="line" id="r-line"></p>
+    <p class="prize">Share your sticker with friends to be eligible for the prize! 🎁</p>
     <button class="btn share" id="share">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 6 15c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></svg>
       Share my sticker
@@ -544,6 +560,18 @@ const CATS = {
 const $ = id => document.getElementById(id);
 const player = { id:"", name:"", contact:"", from:"" };
 let catKey = null, qi = 0, score = 0, locked = false;
+let quizStart = 0, timerHandle = null, elapsedSec = 0;
+
+/* Referral tracking: a shared link carries ?ref=<lead_id>. The visit lands in
+   the shares tab against the referrer's id, so click-throughs and shares sit in
+   one log; the new lead is attributed via referred_by when they sign up. */
+const REF = new URLSearchParams(location.search).get("ref") || "";
+if(REF) post("shares", { lead_id: REF, channel: "referral_visit" });
+
+function fmtTime(sec){
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
 
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
@@ -554,7 +582,7 @@ function show(id){
 /* =========================================================
    1. DETAILS
    ========================================================= */
-const PHONE = /^[\d\s+\-()]{7,}$/;
+const PHONE_CHARS = /^[\d\s+\-()]{7,}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 $("go-cats").addEventListener("click", () => {
@@ -565,8 +593,13 @@ $("go-cats").addEventListener("click", () => {
 
   if(!name){ return fail("Add your name to carry on."); }
   if(!contact){ return fail("Add a phone number or an email."); }
-  if(!PHONE.test(contact) && !EMAIL.test(contact)){
-    return fail("That doesn't look like a phone number or an email. Check it once.");
+  if(!EMAIL.test(contact)){
+    if(!PHONE_CHARS.test(contact)){
+      return fail("That doesn't look like a phone number or an email. Check it once.");
+    }
+    if(contact.replace(/\D/g, "").length !== 10){
+      return fail("Phone number should be exactly 10 digits.");
+    }
   }
   if(!from){ return fail("Tell us which city or state you're from."); }
 
@@ -579,10 +612,11 @@ $("go-cats").addEventListener("click", () => {
     name: player.name,
     contact: player.contact,
     city: player.from,
-    is_email: EMAIL.test(player.contact)
+    is_email: EMAIL.test(player.contact),
+    referred_by: REF
   });
 
-  $("greet").textContent = firstName() + ", pick your lane";
+  $("greet").textContent = firstName() + ", pick your category";
   show("s-cats");
 
   function fail(msg){ err.textContent = msg; err.classList.add("on"); }
@@ -613,6 +647,13 @@ function startQuiz(key){
   $("qtag").style.setProperty("--tint", TINTS[key]);
   show("s-quiz");
   renderQ();
+
+  quizStart = Date.now();
+  $("qtimer").textContent = "0:00";
+  clearInterval(timerHandle);
+  timerHandle = setInterval(() => {
+    $("qtimer").textContent = fmtTime(Math.floor((Date.now() - quizStart) / 1000));
+  }, 250);
 }
 
 function renderQ(){
@@ -664,11 +705,15 @@ function answer(btn, picked, correct){
 let current = null;
 
 function finish(){
+  clearInterval(timerHandle);
+  elapsedSec = Math.round((Date.now() - quizStart) / 1000);
+
   const cat = CATS[catKey];
   const tier = cat.tiers.find(t => score >= t.min);
   current = { cat, tier };
   $("sheet").classList.remove("on");
   $("share-note").textContent = "";
+  $("r-timer").textContent = "⏱ Finished in " + fmtTime(elapsedSec);
 
   const hasArt = Boolean(tier.art && ART[tier.art]);
   $("sticker").hidden = hasArt;
@@ -692,7 +737,8 @@ function finish(){
     category: cat.name,
     score: score,
     total: cat.qs.length,
-    tier: tier.title
+    tier: tier.title,
+    time_seconds: elapsedSec
   });
 
   show("s-result");
@@ -705,9 +751,20 @@ function finish(){
 const SHARE_URL = "https://dubdubquiz.vercel.app";  // where the share link points
 const SHARE_CTA = "find your smart here!";       // change the caption line here
 
+function shareLink(){
+  return SHARE_URL + (player.id ? "?ref=" + encodeURIComponent(player.id) : "");
+}
+
 function caption(){
   const { cat, tier } = current;
-  return `${tier.title} · ${score}/${cat.qs.length} on ${cat.name}.\n\n${SHARE_CTA} ${SHARE_URL}`;
+  return `${tier.title} · ${score}/${cat.qs.length} on ${cat.name}.\n\n${SHARE_CTA} ${shareLink()}`;
+}
+
+/* Logs a real share action (not just opening the panel) and confirms
+   prize eligibility to the player. */
+function logShare(channel){
+  post("shares", { lead_id: player.id, channel: channel });
+  $("share-note").textContent = "Shared! You're in the running for the prize 🎉";
 }
 
 /* Paints the sticker at 1080×1080 and returns the canvas. Synchronous on
@@ -855,7 +912,7 @@ $("share").addEventListener("click", () => {
   // 1. Share sheet WITH the image. No awaits before this call.
   if(readyFile && navigator.canShare && navigator.canShare({ files:[readyFile] })){
     navigator.share({ ...payload, files:[readyFile] })
-      .then(() => { note.textContent = "Shared."; post("shares", { lead_id: player.id, channel: "native_file" }); })
+      .then(() => logShare("native_file"))
       .catch(err => {
         if(err.name === "AbortError"){ note.textContent = ""; return; }
         note.textContent = "Your browser blocked the image. Save it below instead.";
@@ -868,7 +925,7 @@ $("share").addEventListener("click", () => {
   if(navigator.share){
     note.textContent = "This browser can't attach images to a share. Save the sticker below.";
     openSheet();
-    navigator.share(payload).catch(() => {});
+    navigator.share(payload).then(() => logShare("native_text")).catch(() => {});
     return;
   }
 
@@ -892,16 +949,20 @@ function openSheet(){
 
   $("wa").href = "https://wa.me/?text=" + encodeURIComponent(text);
   $("tw").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
-  post("shares", { lead_id: player.id, channel: "sheet" });
+  post("shares", { lead_id: player.id, channel: "panel_open" });
   $("sheet").classList.add("on");
   $("sheet").scrollIntoView({ behavior:"smooth", block:"nearest" });
 }
+
+$("wa").addEventListener("click", () => logShare("whatsapp"));
+$("tw").addEventListener("click", () => logShare("twitter"));
 
 $("dl").addEventListener("click", () => {
   const url = readyURL || paintSticker().toDataURL("image/png");
   const a = document.createElement("a");
   a.href = url; a.download = "dubdub-sticker.png";
   document.body.appendChild(a); a.click(); a.remove();
+  logShare("download");
 });
 
 $("copy").addEventListener("click", async () => {
@@ -914,6 +975,7 @@ $("copy").addEventListener("click", async () => {
   }
   $("copy").textContent = "Copied";
   setTimeout(() => $("copy").textContent = "Copy caption", 1600);
+  logShare("copy");
 });
 
 $("again").addEventListener("click", () => show("s-cats"));

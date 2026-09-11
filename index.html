@@ -310,7 +310,7 @@ button{font:inherit; cursor:pointer; border:none}
     <div class="field">
       <label for="f-contact">Phone or email</label>
       <input id="f-contact" type="text" placeholder="98765 43210 or you@mail.com" autocomplete="email">
-      <p class="hint">Either one works.</p>
+      <p class="hint">10-digit phone number, or an email.</p>
     </div>
     <div class="field">
       <label for="f-from">Where are you from?</label>
@@ -323,7 +323,7 @@ button{font:inherit; cursor:pointer; border:none}
 
   <!-- 2. CATEGORY -->
   <section class="screen" id="s-cats">
-    <h1 id="greet">Pick your lane</h1>
+    <h1 id="greet">Pick your category</h1>
     <p class="sub">Five rounds on the menu. Ten questions each, no going back.</p>
     <div class="cats" id="cat-list"></div>
   </section>
@@ -562,10 +562,11 @@ const player = { id:"", name:"", contact:"", from:"" };
 let catKey = null, qi = 0, score = 0, locked = false;
 let quizStart = 0, timerHandle = null, elapsedSec = 0;
 
-/* Referral tracking: a shared link carries ?ref=<lead_id>. Log the visit
-   once on load, then attribute the new lead to it when they sign up. */
+/* Referral tracking: a shared link carries ?ref=<lead_id>. The visit lands in
+   the shares tab against the referrer's id, so click-throughs and shares sit in
+   one log; the new lead is attributed via referred_by when they sign up. */
 const REF = new URLSearchParams(location.search).get("ref") || "";
-if(REF) post("referral_visits", { ref: REF, visit_id: uid() });
+if(REF) post("shares", { lead_id: REF, channel: "referral_visit" });
 
 function fmtTime(sec){
   const m = Math.floor(sec / 60), s = sec % 60;
@@ -581,7 +582,7 @@ function show(id){
 /* =========================================================
    1. DETAILS
    ========================================================= */
-const PHONE = /^[\d\s+\-()]{7,}$/;
+const PHONE_CHARS = /^[\d\s+\-()]{7,}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 $("go-cats").addEventListener("click", () => {
@@ -592,8 +593,13 @@ $("go-cats").addEventListener("click", () => {
 
   if(!name){ return fail("Add your name to carry on."); }
   if(!contact){ return fail("Add a phone number or an email."); }
-  if(!PHONE.test(contact) && !EMAIL.test(contact)){
-    return fail("That doesn't look like a phone number or an email. Check it once.");
+  if(!EMAIL.test(contact)){
+    if(!PHONE_CHARS.test(contact)){
+      return fail("That doesn't look like a phone number or an email. Check it once.");
+    }
+    if(contact.replace(/\D/g, "").length !== 10){
+      return fail("Phone number should be exactly 10 digits.");
+    }
   }
   if(!from){ return fail("Tell us which city or state you're from."); }
 
@@ -610,7 +616,7 @@ $("go-cats").addEventListener("click", () => {
     referred_by: REF
   });
 
-  $("greet").textContent = firstName() + ", pick your lane";
+  $("greet").textContent = firstName() + ", pick your category";
   show("s-cats");
 
   function fail(msg){ err.textContent = msg; err.classList.add("on"); }
