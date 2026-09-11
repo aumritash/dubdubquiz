@@ -9,13 +9,13 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Which dubdub sticker are you?">
 <meta property="og:description" content="Bollywood, Puzzle, Sports, Maths, GK. Ten questions. One sticker.">
-<meta property="og:url" content="https://dubdubquiz.vercel.app/">
-<meta property="og:image" content="https://dubdubquiz.vercel.app/og.png">
+<meta property="og:url" content="https://find-your-smart.godubdub.com/">
+<meta property="og:image" content="https://find-your-smart.godubdub.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Which dubdub sticker are you? Ten questions, one sticker.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://dubdubquiz.vercel.app/og.png">
+<meta name="twitter:image" content="https://find-your-smart.godubdub.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -301,12 +301,12 @@ button{font:inherit; cursor:pointer; border:none}
 
   <div class="mast">
     <div class="mark">dub<span>dub</span></div>
-    <p>10 questions. One sticker.</p>
+    <p id="tagline" hidden>10 questions. One sticker.</p>
   </div>
 
   <!-- 1. DETAILS -->
   <section class="screen on" id="s-details">
-    <h1>Who's playing?</h1>
+    <h1>Find your smart!</h1>
     <p class="sub">Tell us where to send the sticker if you win one.</p>
 
     <div class="field">
@@ -319,7 +319,7 @@ button{font:inherit; cursor:pointer; border:none}
       <p class="hint">10-digit phone number, or an email.</p>
     </div>
     <div class="field">
-      <label for="f-college">Which college do/did you go to?</label>
+      <label for="f-college">College</label>
       <input id="f-college" type="text" placeholder="Christ University" autocomplete="organization">
     </div>
 
@@ -588,6 +588,7 @@ function fmtTime(sec){
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
   $(id).classList.add("on");
+  $("tagline").hidden = (id === "s-details");   // held back on the opening screen
   window.scrollTo({top:0});
 }
 
@@ -763,7 +764,7 @@ function finish(){
 /* =========================================================
    5. SHARE
    ========================================================= */
-const SHARE_URL = "https://dubdubquiz.vercel.app";  // where the share link points
+const SHARE_URL = "https://find-your-smart.godubdub.com";  // where the share link points
 const SHARE_CTA = "find your smart here!";       // change the caption line here
 
 function shareLink(){
