@@ -562,11 +562,10 @@ const player = { id:"", name:"", contact:"", from:"" };
 let catKey = null, qi = 0, score = 0, locked = false;
 let quizStart = 0, timerHandle = null, elapsedSec = 0;
 
-/* Referral tracking: a shared link carries ?ref=<lead_id>. The visit lands in
-   the shares tab against the referrer's id, so click-throughs and shares sit in
-   one log; the new lead is attributed via referred_by when they sign up. */
+/* Referral tracking: a shared link carries ?ref=<lead_id>. Log the visit
+   once on load, then attribute the new lead to it when they sign up. */
 const REF = new URLSearchParams(location.search).get("ref") || "";
-if(REF) post("shares", { lead_id: REF, channel: "referral_visit" });
+if(REF) post("referral_visits", { ref: REF, visit_id: uid() });
 
 function fmtTime(sec){
   const m = Math.floor(sec / 60), s = sec % 60;
