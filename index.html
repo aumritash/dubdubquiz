@@ -272,6 +272,10 @@ button{font:inherit; cursor:pointer; border:none}
   padding:0 .06em;   /* same clip guard as the wordmark */
 }
 .congrats .how{font-size:14px; color:var(--muted); margin-top:9px}
+.congrats .note{
+  font-size:16px; font-weight:600; letter-spacing:-.01em;
+  color:var(--text); max-width:30ch; margin:0 auto;
+}
 
 /* --- share --- */
 .channels{display:flex; justify-content:center; gap:14px; margin:0 auto 20px}
@@ -388,10 +392,13 @@ button{font:inherit; cursor:pointer; border:none}
     <div class="timer-badge" id="r-timer"></div>
     <div class="verdict" id="r-verdict"></div>
     <p class="line" id="r-line"></p>
-    <div class="congrats" id="r-congrats" hidden>
-      <div class="eyebrow">Congratulations</div>
-      <div class="amount">Win up to ₹10,000</div>
-      <div class="how">Share your sticker to enter</div>
+    <div class="congrats">
+      <div id="r-win" hidden>
+        <div class="eyebrow">Congratulations</div>
+        <div class="amount">Win up to ₹10,000</div>
+        <div class="how">Share your sticker to enter</div>
+      </div>
+      <p class="note" id="r-note" hidden>You didn't fare too well, but you still have a shot!</p>
     </div>
 
     <div class="channels">
@@ -782,7 +789,9 @@ function finish(){
   $("r-art").hidden = !hasArt;
   if(hasArt) $("r-art").src = ART[STICKER_ART];
 
-  $("r-congrats").hidden = score < PRIZE_MIN;
+  const qualified = score >= PRIZE_MIN;
+  $("r-win").hidden = !qualified;
+  $("r-note").hidden = qualified;
   setChannelLinks();
 
   $("r-emo").textContent = tier.emo || "";
