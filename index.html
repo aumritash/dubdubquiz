@@ -257,33 +257,34 @@ button{font:inherit; cursor:pointer; border:none}
   font-size:12.5px; font-weight:700; letter-spacing:.02em;
   font-variant-numeric:tabular-nums;
 }
-.prize{
-  font-size:13.5px; font-weight:600; color:var(--gold);
-  max-width:32ch; margin:0 auto 14px;
+.congrats{margin:2px auto 24px}
+.congrats .eyebrow{
+  font-size:11.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:9px;
 }
-.congrats{
+.congrats .amount{
   font-family:"Figtree",system-ui,sans-serif;
-  font-weight:800; font-size:17px; letter-spacing:-.02em;
-  line-height:1.25; color:var(--text);
-  max-width:30ch; margin:0 auto 12px;
-  padding:13px 16px; border-radius:var(--r-card);
-  background:color-mix(in srgb, var(--gold) 15%, var(--surface));
-  border:1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  font-weight:900; font-size:clamp(36px,9.5vw,46px);
+  letter-spacing:-.045em; line-height:1;
+  background:var(--brand);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  padding:0 .06em;   /* same clip guard as the wordmark */
 }
+.congrats .how{font-size:14px; color:var(--muted); margin-top:9px}
 
 /* --- share --- */
-.channels{display:flex; justify-content:center; flex-wrap:wrap; gap:11px; margin:0 auto 18px}
+.channels{display:flex; justify-content:center; gap:14px; margin:0 auto 20px}
 .channel{
-  display:inline-flex; align-items:center; justify-content:center; gap:9px;
-  padding:15px 26px; border-radius:var(--r-btn);
-  border:none; font-size:16px; font-weight:700;
-  text-decoration:none; color:#fff;
+  width:60px; height:60px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0; border:none; color:#fff;
   transition:transform .12s ease, filter .12s ease;
 }
-.channel:active{transform:scale(.98)}
+.channel:active{transform:scale(.95)}
 .channel:hover{filter:brightness(1.08)}
 .channel:focus-visible{outline:3px solid var(--gold); outline-offset:3px}
-.channel svg{width:19px; height:19px; fill:currentColor; flex:none}
+.channel svg{width:27px; height:27px; fill:currentColor}
 
 .channel.wa{background:#25D366; color:#052E16}
 .channel.ig{background:linear-gradient(45deg,#FEDA75 0%,#FA7E1E 25%,#D62976 55%,#962FBF 80%,#4F5BD5 100%)}
@@ -387,21 +388,21 @@ button{font:inherit; cursor:pointer; border:none}
     <div class="timer-badge" id="r-timer"></div>
     <div class="verdict" id="r-verdict"></div>
     <p class="line" id="r-line"></p>
-    <p class="congrats" id="r-congrats" hidden>Congratulations! You can now join and win up to 10,000INR!</p>
-    <p class="prize" id="r-cta"></p>
+    <div class="congrats" id="r-congrats" hidden>
+      <div class="eyebrow">Congratulations</div>
+      <div class="amount">Win up to ₹10,000</div>
+      <div class="how">Share your sticker to enter</div>
+    </div>
 
     <div class="channels">
-      <a class="channel wa" id="wa" target="_blank" rel="noopener">
+      <a class="channel wa" id="wa" target="_blank" rel="noopener" aria-label="Share on WhatsApp">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z"/><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm0 18.15h-.01a8.2 8.2 0 01-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.17 8.17 0 01-1.25-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 012.41 5.82c0 4.54-3.7 8.23-8.25 8.23z"/></svg>
-        Challenge friends
       </a>
-      <a class="channel tw" id="tw" target="_blank" rel="noopener">
+      <a class="channel tw" id="tw" target="_blank" rel="noopener" aria-label="Share on X">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        X
       </a>
-      <button class="channel ig" id="ig">
+      <button class="channel ig" id="ig" aria-label="Share on Instagram">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38C1.35 2.68.93 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13.67.66 1.34 1.08 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.13-1.38.66-.67 1.08-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.13-.67-.66-1.34-1.08-2.13-1.38-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8zm7.85-10.4a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z"/></svg>
-        Instagram
       </button>
     </div>
     <button class="btn ghost" id="more">Save sticker or copy caption</button>
@@ -781,13 +782,7 @@ function finish(){
   $("r-art").hidden = !hasArt;
   if(hasArt) $("r-art").src = ART[STICKER_ART];
 
-  /* A qualifying score unlocks the prize draw, which also decides where we
-     point them: entrants post publicly, everyone else challenges a friend. */
-  const qualified = score >= PRIZE_MIN;
-  $("r-congrats").hidden = !qualified;
-  $("r-cta").textContent = qualified
-    ? "Share with your friends for entry!"
-    : "Challenge your friends!";
+  $("r-congrats").hidden = score < PRIZE_MIN;
   setChannelLinks();
 
   $("r-emo").textContent = tier.emo || "";
