@@ -326,6 +326,28 @@ button{font:inherit; cursor:pointer; border:none}
 .chip:hover,.chip:focus-visible{border-color:var(--primary); outline:none}
 .chip.solid{background:var(--primary); color:#fff; border-color:var(--primary); font-weight:700}
 
+/* --- leaderboard --- */
+.lb{margin-top:38px; text-align:left}
+.lb h3{
+  font-family:"Figtree",system-ui,sans-serif;
+  font-weight:700; font-size:17px; letter-spacing:-.02em;
+  text-align:center; margin-bottom:14px;
+}
+.lb-row{
+  display:grid; grid-template-columns:30px 1fr auto auto; gap:12px; align-items:center;
+  padding:12px 15px; margin-bottom:8px;
+  background:var(--surface); border:1.5px solid var(--line); border-radius:14px;
+  font-size:14.5px;
+}
+.lb-row.you{border-color:var(--primary); background:color-mix(in srgb, var(--primary) 12%, var(--surface))}
+.lb-rank{font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums}
+.lb-row:first-child .lb-rank{color:var(--gold)}
+.lb-name{font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.lb-score{font-weight:700; font-variant-numeric:tabular-nums}
+.lb-time{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums}
+.lb-gap{text-align:center; color:var(--muted); font-size:16px; line-height:1; margin:2px 0 10px}
+.lb-note{text-align:center; color:var(--muted); font-size:13.5px; padding:8px 0}
+
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important; transition:none !important}
 }
@@ -428,6 +450,11 @@ button{font:inherit; cursor:pointer; border:none}
 
     <button class="btn ghost" id="again">Try another category</button>
     <button class="btn ghost" id="restart">Start over</button>
+
+    <section class="lb" id="lb" hidden>
+      <h3 id="lb-title">Leaderboard</h3>
+      <div id="lb-body"></div>
+    </section>
   </section>
 
 </main>
@@ -806,7 +833,7 @@ function finish(){
   void st.offsetWidth;
   st.style.animation = "";
 
-  post("attempts", {
+  const saved = post("attempts", {
     lead_id: player.id,
     category: cat.name,
     score: score,
@@ -817,6 +844,77 @@ function finish(){
 
   show("s-result");
   prepareSticker();
+  loadLeaderboard(saved);
+}
+
+/* =========================================================
+   4b. LEADERBOARD
+   ========================================================= */
+async function loadLeaderboard(attemptSaved){
+  const box = $("lb"), body = $("lb-body");
+  box.hidden = false;
+  $("lb-title").textContent = current.cat.name + " leaderboard";
+  body.replaceChildren(note("Loading…"));
+
+  try {
+    await attemptSaved;   // our own row has to be on the sheet before we read it back
+    const url = SHEET_ENDPOINT
+      + "?leaderboard=" + encodeURIComponent(current.cat.name)
+      + "&lead=" + encodeURIComponent(player.id);
+    const data = await fetch(url, { redirect:"follow" }).then(r => r.json());
+    if(!data.ok || !Array.isArray(data.top)) throw new Error(data.error || "bad response");
+    renderLeaderboard(data);
+  } catch(e){
+    console.warn("leaderboard failed:", e);
+    body.replaceChildren(note("Couldn't load the leaderboard right now."));
+  }
+
+  function note(text){
+    const p = document.createElement("p");
+    p.className = "lb-note"; p.textContent = text;
+    return p;
+  }
+}
+
+/* Names come straight from the sheet, so everything is built with
+   textContent — never innerHTML. */
+function renderLeaderboard(data){
+  const body = $("lb-body");
+  const frag = document.createDocumentFragment();
+
+  if(!data.top.length){
+    const p = document.createElement("p");
+    p.className = "lb-note"; p.textContent = "You're the first to finish this one.";
+    body.replaceChildren(p);
+    return;
+  }
+
+  data.top.forEach(e => frag.appendChild(row(e, data.you && e.rank === data.you.rank)));
+
+  // Outside the top ten: show a gap, then where they actually landed.
+  if(data.you && data.you.rank > data.top.length){
+    const gap = document.createElement("div");
+    gap.className = "lb-gap"; gap.textContent = "···";
+    frag.appendChild(gap);
+    frag.appendChild(row(data.you, true));
+  }
+
+  body.replaceChildren(frag);
+
+  function row(e, you){
+    const el = document.createElement("div");
+    el.className = "lb-row" + (you ? " you" : "");
+    const cell = (cls, text) => {
+      const s = document.createElement("span");
+      s.className = cls; s.textContent = text;
+      el.appendChild(s);
+    };
+    cell("lb-rank", "#" + e.rank);
+    cell("lb-name", you ? e.name + " (you)" : e.name);
+    cell("lb-score", e.score + "/" + current.cat.qs.length);
+    cell("lb-time", e.time == null ? "—" : fmtTime(e.time));
+    return el;
+  }
 }
 
 /* =========================================================
