@@ -862,7 +862,8 @@ async function loadLeaderboard(attemptSaved){
       + "?leaderboard=" + encodeURIComponent(current.cat.name)
       + "&lead=" + encodeURIComponent(player.id);
     const data = await fetch(url, { redirect:"follow" }).then(r => r.json());
-    if(!data.ok || !Array.isArray(data.top)) throw new Error(data.error || "bad response");
+    if(data.ok && !Array.isArray(data.top)){ box.hidden = true; return; }   // backend predates leaderboards
+    if(!data.ok) throw new Error(data.error || "bad response");
     renderLeaderboard(data);
   } catch(e){
     console.warn("leaderboard failed:", e);
@@ -1113,19 +1114,32 @@ function openSheet(){
   $("sheet").scrollIntoView({ behavior:"smooth", block:"nearest" });
 }
 
-$("wa").addEventListener("click", () => logShare("whatsapp"));
-$("tw").addEventListener("click", () => logShare("twitter"));
+/* The wa.me and X intent URLs can only carry text, so the sticker itself can
+   only travel through the OS share sheet. Where the browser allows file
+   sharing this takes over the tap and hands the sheet the image plus caption;
+   the player then picks the app. Returns false to fall through to the plain
+   text link instead. No awaits before share(): that drops user activation and
+   iOS then silently refuses the file. */
+function shareWithImage(ev, channel){
+  if(!(readyFile && navigator.canShare && navigator.canShare({ files:[readyFile] }))) return false;
+  ev.preventDefault();
+  const href = ev.currentTarget.href;
+  navigator.share({ title:"dubdub", text: caption(), files:[readyFile] })
+    .then(() => logShare(channel))
+    .catch(err => {
+      if(err.name === "AbortError") return;
+      if(href) window.open(href, "_blank", "noopener");   // sheet failed: send the text at least
+    });
+  return true;
+}
 
-/* Instagram publishes no web share intent, so no URL can pre-fill a post. On a
-   phone the OS sheet lists Instagram, so hand the image to that; on desktop the
+$("wa").addEventListener("click", ev => { if(!shareWithImage(ev, "whatsapp")) logShare("whatsapp"); });
+$("tw").addEventListener("click", ev => { if(!shareWithImage(ev, "twitter"))  logShare("twitter"); });
+
+/* Instagram publishes no web share intent at all, so without the sheet the
    only honest route is saving the sticker and posting it by hand. */
-$("ig").addEventListener("click", () => {
-  if(readyFile && navigator.canShare && navigator.canShare({ files:[readyFile] })){
-    navigator.share({ title:"dubdub", text: caption(), files:[readyFile] })
-      .then(() => logShare("instagram"))
-      .catch(() => {});
-    return;
-  }
+$("ig").addEventListener("click", ev => {
+  if(shareWithImage(ev, "instagram")) return;
   post("shares", { lead_id: player.id, channel: "instagram_manual" });
   $("share-note").textContent = "Save the sticker, then post it on Instagram with the caption.";
 });
