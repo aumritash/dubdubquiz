@@ -501,6 +501,7 @@ button{font:inherit; cursor:pointer; border:none}
 
 </main>
 
+<script src="colleges.js"></script>
 <script>
 /* Category art and group tints lifted from the dubdub app's
    'Edit Your Categories' screen. */
@@ -716,339 +717,6 @@ function show(id){
 const PHONE_CHARS = /^[\d\s+\-()]{7,}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-/* Bengaluru colleges, offered as autocomplete so the college leaderboard can
-   group on one spelling. Free text is still accepted for anything not listed. */
-const COLLEGES = [
-  "Abbas Khan College for Women",
-  "Acharya & B M Reddy College of Pharmacy",
-  "Acharya Bangalore B-School",
-  "Acharya Institute of Graduate Studies",
-  "Acharya Institute of Technology",
-  "Acharya's NRV School of Architecture",
-  "Achutha Institute of Technology",
-  "ACS College of Engineering",
-  "Adarsha Film & TV Institute",
-  "Adarsha Institute of Technology",
-  "Aditya College of Engineering",
-  "AECS Maaruti College of Dental Sciences",
-  "Agragami College of Aeronautical Engineering",
-  "AIMS Institutes",
-  "Akash Global College of Management & Science",
-  "Akash Institute of Medical Sciences",
-  "Al-Ameen Arts, Science and Commerce College",
-  "Al-Ameen College of Law",
-  "Al-Ameen College of Pharmacy",
-  "Alliance School of Business",
-  "Alliance School of Law",
-  "Alliance University",
-  "Alpha College of Engineering",
-  "AMC Engineering College",
-  "Amity University Bengaluru",
-  "Amrita School of Engineering, Bengaluru",
-  "Amrita Vishwa Vidyapeetham, Bengaluru",
-  "Anupama College of Management and Science",
-  "APS College of Engineering",
-  "Army Institute of Hotel Management and Catering Technology",
-  "ASC Degree College",
-  "Atria Institute of Technology",
-  "Atria University",
-  "Ayurvedic Medical College, Bengaluru",
-  "Azim Premji University",
-  "Baldwin Methodist College",
-  "Baldwin Women's Methodist College",
-  "Bangalore City College",
-  "Bangalore College of Engineering and Technology",
-  "Bangalore Institute of Dental Sciences",
-  "Bangalore Institute of Legal Studies (BILS)",
-  "Bangalore Institute of Management Studies",
-  "Bangalore Institute of Technology (BIT)",
-  "Bangalore Medical College and Research Institute (BMCRI)",
-  "Bangalore School of Design",
-  "Bangalore Technological Institute",
-  "Bangalore University",
-  "Bearys Institute of Technology",
-  "Bengaluru City University",
-  "Bengaluru North University",
-  "BES College",
-  "BGS Global Institute of Medical Sciences",
-  "Bhavan's Priyamvada Birla Institute of Management",
-  "Bishop Cotton Women's Christian College",
-  "Bishop Cotton Women's Christian Law College",
-  "BMS College for Women",
-  "BMS College of Architecture",
-  "BMS College of Engineering",
-  "BMS College of Law",
-  "BMS Evening College of Engineering",
-  "BMS Institute of Technology and Management",
-  "BNM Institute of Technology (BNMIT)",
-  "Bowring and Lady Curzon Medical College",
-  "Brindavan College",
-  "Brindavan College of Engineering",
-  "BTL Institute of Technology and Management",
-  "Cambridge Institute of Technology",
-  "Canara Bank School of Management Studies",
-  "Cauvery College",
-  "Chanakya University",
-  "Christ Academy",
-  "Christ Academy Institute of Law",
-  "Christ University",
-  "Christ University Faculty of Engineering",
-  "Christ University Institute of Management",
-  "City Engineering College",
-  "CMR Institute of Management Studies (CMRIMS)",
-  "CMR Institute of Technology (CMRIT)",
-  "CMR University",
-  "CMR University School of Legal Studies",
-  "CMS Business School",
-  "Community Institute of Management Studies",
-  "Dairy Science College, Hebbal",
-  "Dayananda Sagar Academy of Technology and Management (DSATM)",
-  "Dayananda Sagar Business School",
-  "Dayananda Sagar College of Arts, Science and Commerce",
-  "Dayananda Sagar College of Dental Sciences",
-  "Dayananda Sagar College of Engineering (DSCE)",
-  "Dayananda Sagar College of Pharmacy",
-  "Dayananda Sagar School of Architecture",
-  "Dayananda Sagar University",
-  "Don Bosco Institute of Technology",
-  "Dr. Ambedkar College of Law",
-  "Dr. Ambedkar Institute of Technology (AIT)",
-  "Dr. B R Ambedkar Medical College",
-  "Dr. B. R. Ambedkar School of Economics University (BASE)",
-  "Dr. NSAM First Grade College",
-  "Dr. Ramanah Manohar College of Law",
-  "Dr. Syamala Reddy Dental College",
-  "East Point College of Engineering and Technology",
-  "East Point College of Medical Sciences",
-  "East West College of Engineering",
-  "East West College of Pharmacy",
-  "East West College of Science",
-  "East West Institute of Technology",
-  "ESIC Medical College, Bengaluru",
-  "Florence College of Physiotherapy",
-  "Florida College of Management and Computer Science",
-  "Garden City College",
-  "Garden City University",
-  "Ghousia College of Engineering",
-  "GIBS Business School",
-  "Global Academy of Technology",
-  "Gopalan College of Commerce",
-  "Gopalan College of Engineering and Management",
-  "Gopalan School of Architecture and Planning",
-  "Government Arts College, Bengaluru",
-  "Government Ayurveda Medical College, Bengaluru",
-  "Government College of Pharmacy",
-  "Government Dental College and Research Institute",
-  "Government First Grade College",
-  "Government Institute of Printing Technology",
-  "Government R C College of Commerce and Management",
-  "Government Science College, Bengaluru",
-  "Government SKSJ Technological Institute (SKSJTI)",
-  "GPS Institute of Agricultural Management",
-  "Hasanath College for Women",
-  "Havnur College of Law",
-  "HKBK College of Engineering",
-  "IFIM Business School",
-  "Impact College of Engineering and Applied Sciences",
-  "Indian Academy Degree College",
-  "Indian Institute of Astrophysics",
-  "Indian Institute of Fashion Technology",
-  "Indian Institute of Journalism and New Media (IIJNM)",
-  "Indian Institute of Management Bangalore (IIM-B)",
-  "Indian Institute of Plantation Management",
-  "Indian Institute of Science (IISc)",
-  "Indian Statistical Institute Bangalore",
-  "Indira Priyadarshini College of Law",
-  "Indus Business Academy (IBA)",
-  "Institute for Social and Economic Change (ISEC)",
-  "Institute of Aerospace Medicine (IAM)",
-  "Institute of Hotel Management, Bengaluru (IHM)",
-  "Institute of Wood Science and Technology",
-  "International Institute of Business Studies (IIBS)",
-  "International Institute of Hotel Management (IIHM)",
-  "International Institute of Information Technology Bangalore (IIIT-B)",
-  "International School of Management Excellence (ISME)",
-  "ISBR Business School",
-  "Islamiah Institute of Technology",
-  "Jain College",
-  "Jain University",
-  "Jawaharlal Nehru Centre for Advanced Scientific Research (JNCASR)",
-  "JD Institute of Fashion Technology",
-  "JSS Academy of Technical Education",
-  "Jyothy Institute of Technology",
-  "Jyoti Nivas College",
-  "K S Institute of Technology (KSIT)",
-  "K S School of Engineering and Management",
-  "Kalpataru Institute of Technology",
-  "Karnataka Chitrakala Parishath College of Fine Arts",
-  "Karnataka College of Pharmacy",
-  "Karnataka Samskrit University",
-  "Kempegowda Institute of Management Studies and Research",
-  "Kempegowda Institute of Medical Sciences (KIMS)",
-  "Kempegowda Institute of Physiotherapy",
-  "Ken School of Art",
-  "KLE College of Pharmacy, Bengaluru",
-  "KLE Society's Institute of Dental Sciences",
-  "KLE Society's Law College",
-  "KLE Society's S. Nijalingappa College",
-  "KNS Institute of Technology",
-  "Krishnadevaraya College of Dental Sciences",
-  "Kristu Jayanti College",
-  "Kristu Jayanti College of Law",
-  "Kristu Jayanti University",
-  "Krupanidhi College of Nursing",
-  "Krupanidhi College of Pharmacy",
-  "Lal Bahadur Shastri Degree College",
-  "M S Ramaiah College of Nursing",
-  "M S Ramaiah Dental College",
-  "M S Ramaiah Institute of Technology (MSRIT)",
-  "M S Ramaiah Medical College",
-  "Maharani Lakshmi Ammanni College for Women (MLACW)",
-  "Maharani's Arts, Commerce and Management College for Women",
-  "Maharani's Science College for Women",
-  "Manipal Academy of Higher Education, Bengaluru",
-  "Manipal Institute of Regenerative Medicine",
-  "Manipal Institute of Technology, Bengaluru",
-  "Mariyappa First Grade College",
-  "MES College of Arts, Commerce and Science",
-  "Mount Carmel College",
-  "MP Birla Institute of Management",
-  "MS Engineering College",
-  "MVJ College of Engineering",
-  "MVJ Medical College and Research Hospital",
-  "Nadgir Institute of Engineering and Technology",
-  "Nagarjuna College of Engineering and Technology",
-  "Nagarjuna Degree College",
-  "Narsee Monjee Institute of Management Studies (NMIMS), Bengaluru",
-  "National Centre for Biological Sciences (NCBS)",
-  "National College, Basavanagudi",
-  "National College, Jayanagar",
-  "National Institute of Design Bengaluru (NID)",
-  "National Institute of Fashion Technology Bengaluru (NIFT)",
-  "National Institute of Mental Health and Neurosciences (NIMHANS)",
-  "National Institute of Unani Medicine",
-  "National Law School of India University (NLSIU)",
-  "National School of Business",
-  "New Horizon College of Engineering",
-  "New Horizon College, Kasturinagar",
-  "Nitte College of Pharmaceutical Sciences",
-  "Nitte Meenakshi Institute of Technology (NMIT)",
-  "NMKRV College for Women",
-  "Padmashree Institute of Management and Sciences",
-  "Pearl Academy, Bengaluru",
-  "PES University",
-  "Presidency College",
-  "Presidency University",
-  "Presidency University School of Law",
-  "R R Institute of Technology",
-  "R V College of Architecture",
-  "R V College of Engineering (RVCE)",
-  "Rai Technology University",
-  "Rajarajeswari College of Engineering",
-  "Rajarajeswari Dental College and Hospital",
-  "Rajarajeswari Medical College and Hospital",
-  "Rajiv Gandhi College of Law",
-  "Rajiv Gandhi Institute of Technology",
-  "Rajiv Gandhi University of Health Sciences (RGUHS)",
-  "Ramaiah College of Arts, Science and Commerce",
-  "Ramaiah College of Law",
-  "Ramaiah Institute of Management",
-  "Ramaiah University of Applied Sciences",
-  "Ramakrishna Ayurvedic Medical College",
-  "Raman Research Institute",
-  "RBANM's First Grade College",
-  "Regional Institute of Co-operative Management",
-  "REVA University",
-  "REVA University School of Legal Studies",
-  "RJS Institute of Management Studies",
-  "RNS Institute of Technology (RNSIT)",
-  "RPA First Grade College",
-  "RR College of Pharmacy",
-  "RV Dental College",
-  "RV Institute of Management",
-  "RV Institute of Technology and Management (RVITM)",
-  "RV University",
-  "Sacred Heart Degree College",
-  "Sai Vidya Institute of Technology",
-  "Sambhram Institute of Technology",
-  "Sampoorna Institute of Technology",
-  "Sapthagiri College of Engineering",
-  "Sapthagiri Institute of Medical Sciences",
-  "Sarvodaya Law College",
-  "SEA College of Engineering and Technology",
-  "Seshadripuram College",
-  "Seshadripuram Commerce College",
-  "Seshadripuram First Grade College",
-  "Seshadripuram Law College",
-  "Sheshadripuram Academy of Business Studies",
-  "Sheshadripuram Institute of Management",
-  "Shirdi Sai Engineering College",
-  "Sindhi College",
-  "Sir M Visvesvaraya Institute of Technology (Sir MVIT)",
-  "SJB Institute of Technology",
-  "SJR College of Law",
-  "Smt. VHD Central Institute of Home Science",
-  "Soundarya Institute of Management and Science",
-  "Sri Bhagawan Mahaveer Jain College",
-  "Sri Kengal Hanumanthaiah Law College",
-  "Sri Krishna Degree College",
-  "Sri Krishna Institute of Technology",
-  "Sri Rajiv Gandhi College of Dental Sciences",
-  "Sri Revana Siddeshwara Institute of Technology",
-  "Sri Sairam College of Engineering",
-  "Sri Venkateshwara College of Engineering",
-  "Srishti Manipal Institute of Art, Design and Technology",
-  "Srushti Degree College",
-  "SSMRV College",
-  "St. Anne's Degree College for Women",
-  "St. Claret College",
-  "St. Francis de Sales College (SFS)",
-  "St. John's College of Nursing",
-  "St. John's Medical College",
-  "St. Joseph's College of Business Administration",
-  "St. Joseph's College of Commerce",
-  "St. Joseph's College of Law",
-  "St. Joseph's Evening College",
-  "St. Joseph's Institute of Management",
-  "St. Joseph's University",
-  "St. Paul's College, Bengaluru",
-  "Surana College",
-  "Symbiosis Institute of Business Management, Bengaluru",
-  "T John Institute of Technology",
-  "The Oxford College of Arts",
-  "The Oxford College of Business Management",
-  "The Oxford College of Engineering",
-  "The Oxford College of Hotel Management",
-  "The Oxford College of Science",
-  "The Oxford Dental College",
-  "The Oxford Medical College",
-  "Trans-Disciplinary University (TDU)",
-  "United Mission Degree College",
-  "University Law College, Bangalore University",
-  "University of Agricultural Sciences, Bangalore (GKVK)",
-  "University Visvesvaraya College of Engineering (UVCE)",
-  "V S Dental College",
-  "V V Puram College of Arts and Commerce",
-  "Vanguard Business School",
-  "Vemana Institute of Technology",
-  "VET First Grade College",
-  "Veterinary College, Hebbal",
-  "Vidya Vardhaka Sangha First Grade College",
-  "Vidyashilp University",
-  "Vijaya College",
-  "Vijaya Vittala Institute of Technology",
-  "Visveswarapura Institute of Pharmaceutical Sciences",
-  "Vivekananda College of Law",
-  "Vivekananda Degree College",
-  "Vivekananda Institute of Technology",
-  "Vogue Institute of Art and Design",
-  "Vydehi Institute of Dental Sciences",
-  "Vydehi Institute of Medical Sciences and Research Centre",
-  "Welingkar Institute of Management, Bengaluru",
-  "Xavier Institute of Management and Entrepreneurship (XIME)",
-  "Yellamma Dasappa Institute of Technology",
-  "Zee Institute of Creative Arts (ZICA)"
-];
 
 /* Students mostly know colleges by their initials, and the native datalist
    neither matches those nor renders reliably inside the WhatsApp and
@@ -1058,7 +726,7 @@ const COLLEGES = [
    without filler words — and a query hits if it starts any alias, starts
    any word, or appears anywhere in the name, ranked in that order. */
 const AC_STOP = new Set(["of","and","the","for","in","at"]);
-const AC_INDEX = COLLEGES.map(name => {
+const AC_INDEX = COLLEGES.map(([name, city]) => {
   const bare = name.replace(/\(.*?\)/g, "");
   const tokens = bare.replace(/[^A-Za-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
   const words = tokens.map(t => t.toLowerCase());
@@ -1075,12 +743,22 @@ const AC_INDEX = COLLEGES.map(name => {
     initials(t => !AC_STOP.has(t.toLowerCase())),
     initials(t => t.length > 1 && !AC_STOP.has(t.toLowerCase())),
   ];
-  return { name, clean, words, explicit, generated: [...new Set(generated)].filter(a => a.length > 1) };
+  return { name, city, cityLower: city.toLowerCase(), clean, words, explicit,
+           generated: [...new Set(generated)].filter(a => a.length > 1) };
 });
+
+/* What the list shows before anyone has typed: enough well-known names
+   across the cities to make it obvious there is a list to search. */
+const AC_DEFAULT = [
+  "Christ University", "R V College of Engineering (RVCE)", "PES University",
+  "St. Xavier's College, Mumbai", "Indian Institute of Technology Bombay (IIT Bombay)",
+  "St. Stephen's College", "Shri Ram College of Commerce (SRCC)",
+  "Loyola College, Chennai", "St. Xavier's College, Kolkata", "Osmania University",
+].map(n => AC_INDEX.find(c => c.name === n)).filter(Boolean);
 
 function acMatches(query){
   const q = query.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-  if(q.length < 2) return [];
+  if(q.length < 2) return AC_DEFAULT;
   const qc = q.replace(/ /g, "");
   const hits = [];
   for(const c of AC_INDEX){
@@ -1092,10 +770,11 @@ function acMatches(query){
     else if(c.generated.some(a => a.startsWith(qc)))       score = 2;
     else if(c.words.some(w => w.startsWith(q)))            score = 2;
     else if(c.clean.includes(q))                           score = 1;
+    else if(c.cityLower.startsWith(q))                     score = 1;   // "mumbai" lists Mumbai colleges
     if(score) hits.push({ c, score });
   }
   hits.sort((a, b) => b.score - a.score || a.c.name.length - b.c.name.length);
-  return hits.slice(0, 8).map(h => h.c.name);
+  return hits.slice(0, 8).map(h => h.c);
 }
 
 (function(){
@@ -1103,17 +782,20 @@ function acMatches(query){
   let items = [], active = -1;
 
   function close(){ list.hidden = true; list.replaceChildren(); items = []; active = -1; input.setAttribute("aria-expanded", "false"); }
-  function pick(name){ input.value = name; close(); }
+  function pick(c){ input.value = c.name; close(); }
   function paint(){ [...list.children].forEach((li, i) => li.classList.toggle("active", i === active)); }
 
   function open(){
     items = acMatches(input.value);
     if(!items.length){ close(); return; }
-    list.replaceChildren(...items.map((name, i) => {
+    list.replaceChildren(...items.map(c => {
       const li = document.createElement("li");
-      li.className = "ac-item"; li.setAttribute("role", "option"); li.textContent = name;
+      li.className = "ac-item"; li.setAttribute("role", "option");
+      li.textContent = c.name;
+      const where = document.createElement("small"); where.textContent = c.city;
+      li.appendChild(where);
       // pointerdown, not click: it fires before the input loses focus
-      li.addEventListener("pointerdown", ev => { ev.preventDefault(); pick(name); });
+      li.addEventListener("pointerdown", ev => { ev.preventDefault(); pick(c); });
       return li;
     }));
     active = -1; list.hidden = false; input.setAttribute("aria-expanded", "true");
@@ -1121,6 +803,7 @@ function acMatches(query){
 
   input.addEventListener("input", open);
   input.addEventListener("focus", open);
+  input.addEventListener("click", open);   // a tap on an already-focused field should bring the list back
   input.addEventListener("blur", () => setTimeout(close, 120));
   input.addEventListener("keydown", ev => {
     if(list.hidden) return;
