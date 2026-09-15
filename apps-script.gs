@@ -68,19 +68,25 @@ function doGet(e) {
 }
 
 /**
- * Best attempt per player in one category, ranked by score then by time.
- * Only a display name, score and time ever leave the sheet: this endpoint
- * is public, so contact details must never be part of the response.
+ * Best attempt per player in one category, ranked by score then by time,
+ * plus the same ranking rolled up by college. Only a display name, college,
+ * score and time ever leave the sheet: this endpoint is public, so contact
+ * details must never be part of the response.
  */
 function leaderboard(category, leadId) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  var names = {};
+  var names = {}, colleges = {};
   var leads = ss.getSheetByName('leads');
   if (leads && leads.getLastRow() > 1) {
     var lrows = leads.getRange(2, 1, leads.getLastRow() - 1, TABS.leads.length).getValues();
-    var iId = TABS.leads.indexOf('id'), iName = TABS.leads.indexOf('name');
-    lrows.forEach(function (r) { names[String(r[iId])] = displayName(r[iName]); });
+    var iId = TABS.leads.indexOf('id'), iName = TABS.leads.indexOf('name'),
+        iCollege = TABS.leads.indexOf('city');   // the column still carries its original header
+    lrows.forEach(function (r) {
+      var id = String(r[iId]);
+      names[id] = displayName(r[iName]);
+      colleges[id] = String(r[iCollege] || '').replace(/\s+/g, ' ').trim();
+    });
   }
 
   var best = {};
@@ -119,7 +125,36 @@ function leaderboard(category, leadId) {
     if (r.id === leadId) you = entry;
   });
 
-  return { ok: true, category: category, total: rows.length, top: top, you: you };
+  // Roll the same best-runs up by college. A college stands on its single
+  // best run; player count is shown and only breaks exact ties.
+  var byCollege = {};
+  rows.forEach(function (r) {
+    var college = colleges[r.id];
+    if (!college) return;                       // the field is optional
+    var key = college.toLowerCase();
+    var c = byCollege[key];
+    if (!c) c = byCollege[key] = { name: college, score: -1, time: Infinity, by: '', players: 0 };
+    c.players++;
+    if (r.score > c.score || (r.score === c.score && r.time < c.time)) {
+      c.score = r.score; c.time = r.time; c.by = names[r.id] || 'Player';
+    }
+  });
+  var crow = Object.keys(byCollege).map(function (k) { return byCollege[k]; });
+  crow.sort(function (a, b) { return (b.score - a.score) || (a.time - b.time) || (b.players - a.players); });
+
+  var myCollege = (colleges[leadId] || '').toLowerCase();
+  var ctop = [], yours = null;
+  crow.forEach(function (c, i) {
+    var entry = {
+      rank: i + 1, name: c.name, score: c.score,
+      time: isFinite(c.time) ? c.time : null, by: c.by, players: c.players
+    };
+    if (i < LEADERBOARD_SIZE) ctop.push(entry);
+    if (myCollege && c.name.toLowerCase() === myCollege) yours = entry;
+  });
+
+  return { ok: true, category: category, total: rows.length, top: top, you: you,
+           colleges: ctop, your_college: yours };
 }
 
 // "Aumritash Maitra" → "Aumritash M.", "Priya" → "Priya". Enough to tell

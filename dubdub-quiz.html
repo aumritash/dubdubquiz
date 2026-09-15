@@ -353,6 +353,12 @@ button{font:inherit; cursor:pointer; border:none}
 .lb-score{font-weight:700; font-variant-numeric:tabular-nums}
 .lb-time{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums}
 .lb-gap{text-align:center; color:var(--muted); font-size:16px; line-height:1; margin:2px 0 10px}
+.lb-sub{text-align:center; color:var(--muted); font-size:13px; margin:-8px 0 14px}
+.lb-row.college{grid-template-columns:30px 1fr auto}
+.lb-college{min-width:0}
+.lb-college .lb-name{display:block}
+.lb-college .lb-meta{display:block; font-size:12px; font-weight:500; color:var(--muted); margin-top:2px}
+.lb-best{display:flex; flex-direction:column; align-items:flex-end; gap:1px; white-space:nowrap}
 .lb-note{text-align:center; color:var(--muted); font-size:13.5px; padding:8px 0}
 
 @media (prefers-reduced-motion:reduce){
@@ -465,6 +471,12 @@ button{font:inherit; cursor:pointer; border:none}
     <section class="lb" id="lb" hidden>
       <h3 id="lb-title">Leaderboard</h3>
       <div id="lb-body"></div>
+    </section>
+
+    <section class="lb" id="clb" hidden>
+      <h3>College leaderboard</h3>
+      <p class="lb-sub" id="clb-sub"></p>
+      <div id="clb-body"></div>
     </section>
   </section>
 
@@ -1199,6 +1211,7 @@ function finish(){
 async function loadLeaderboard(attemptSaved){
   const box = $("lb"), body = $("lb-body");
   box.hidden = false;
+  $("clb").hidden = true;
   $("lb-title").textContent = current.cat.name + " leaderboard";
   body.replaceChildren(note("Loading…"));
 
@@ -1211,6 +1224,7 @@ async function loadLeaderboard(attemptSaved){
     if(data.ok && !Array.isArray(data.top)){ box.hidden = true; return; }   // backend predates leaderboards
     if(!data.ok) throw new Error(data.error || "bad response");
     renderLeaderboard(data);
+    renderCollegeBoard({ colleges: data.colleges, yours: data.your_college });   // hides itself until the backend sends it
   } catch(e){
     console.warn("leaderboard failed:", e);
     body.replaceChildren(note("Couldn't load the leaderboard right now."));
@@ -1260,6 +1274,55 @@ function renderLeaderboard(data){
     cell("lb-name", you ? e.name + " (you)" : e.name);
     cell("lb-score", e.score + "/" + current.cat.qs.length);
     cell("lb-time", e.time == null ? "—" : fmtTime(e.time));
+    return el;
+  }
+}
+
+/* Colleges ranked by total points across every category. Same rule as the
+   individual board: built with textContent, never innerHTML. */
+function renderCollegeBoard(data){
+  const box = $("clb"), body = $("clb-body");
+  if(!data || !Array.isArray(data.colleges) || !data.colleges.length){ box.hidden = true; return; }
+  box.hidden = false;
+  $("clb-sub").textContent = "Ranked by each college's best " + current.cat.name + " run. Score first, then time.";
+
+  const frag = document.createDocumentFragment();
+  const mine = data.yours;
+  data.colleges.forEach(c => frag.appendChild(row(c, mine && c.rank === mine.rank)));
+
+  if(mine && mine.rank > data.colleges.length){
+    const gap = document.createElement("div");
+    gap.className = "lb-gap"; gap.textContent = "···";
+    frag.appendChild(gap);
+    frag.appendChild(row(mine, true));
+  }
+  body.replaceChildren(frag);
+
+  function row(c, you){
+    const el = document.createElement("div");
+    el.className = "lb-row college" + (you ? " you" : "");
+
+    const rank = document.createElement("span");
+    rank.className = "lb-rank"; rank.textContent = "#" + c.rank;
+
+    const who = document.createElement("span");
+    who.className = "lb-college";
+    const name = document.createElement("span");
+    name.className = "lb-name"; name.textContent = you ? c.name + " (yours)" : c.name;
+    const meta = document.createElement("span");
+    meta.className = "lb-meta";
+    meta.textContent = "set by " + c.by + " · " + c.players + (c.players === 1 ? " player" : " players");
+    who.append(name, meta);
+
+    const best = document.createElement("span");
+    best.className = "lb-best";
+    const sc = document.createElement("span");
+    sc.className = "lb-score"; sc.textContent = c.score + "/10";
+    const tm = document.createElement("span");
+    tm.className = "lb-time"; tm.textContent = c.time == null ? "—" : fmtTime(c.time);
+    best.append(sc, tm);
+
+    el.append(rank, who, best);
     return el;
   }
 }
