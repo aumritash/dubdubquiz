@@ -173,15 +173,14 @@ button{font:inherit; cursor:pointer; border:none}
 .hook-line b{color:var(--gold)}
 .hook .btn{margin:0; padding:11px 14px; font-size:14px; border-radius:12px; width:auto}
 
-.prize-pill{
-  display:inline-block; margin-bottom:12px;
-  padding:6px 13px; border-radius:var(--r-btn);
-  background:color-mix(in srgb, var(--gold) 16%, var(--surface));
-  border:1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
-  color:var(--gold); font-size:12.5px; font-weight:700; letter-spacing:.03em;
+.stats{display:flex; gap:26px; margin:0 0 20px}
+.stat b{
+  display:block;
+  font-family:"Figtree",system-ui,sans-serif;
+  font-weight:800; font-size:28px; letter-spacing:-.035em; line-height:1;
+  font-variant-numeric:tabular-nums;
 }
-.proof{color:var(--muted); font-size:15px; margin-bottom:22px}
-.proof b{color:var(--text); font-weight:700}
+.stat span{display:block; font-size:12.5px; color:var(--muted); margin-top:3px}
 
 .rival{font-size:14.5px; font-weight:600; max-width:32ch; margin:-12px auto 22px}
 .rival b{color:var(--gold)}
@@ -427,9 +426,12 @@ button{font:inherit; cursor:pointer; border:none}
         <button class="btn" id="hook-go">Beat that score</button>
       </div>
     </div>
-    <span class="prize-pill">✦ Win up to ₹10,000</span>
+    <div class="stats" id="stats" hidden>
+      <div class="stat"><b id="stat-players">0</b><span>players</span></div>
+      <div class="stat"><b id="stat-colleges">0</b><span>colleges</span></div>
+    </div>
     <h1>Find your smart!</h1>
-    <p class="proof" id="proof">Ten questions. One sticker. Five ways to prove it.</p>
+    <p class="sub">Pick your smart in the next page</p>
 
     <div class="field">
       <label for="f-name">Name</label>
@@ -763,13 +765,9 @@ const PROOF_MIN_PLAYERS = 20;   // below this the number undersells rather than 
     landingData = d;
 
     if(d.players >= PROOF_MIN_PLAYERS){
-      const p = $("proof"); p.replaceChildren();
-      const n = document.createElement("b"); n.textContent = d.players.toLocaleString("en-IN");
-      p.append(n, " players");
-      if(d.colleges > 1){
-        const c = document.createElement("b"); c.textContent = String(d.colleges);
-        p.append(" · ", c, " colleges on the board");
-      }
+      $("stat-players").textContent = d.players.toLocaleString("en-IN");
+      $("stat-colleges").textContent = String(d.colleges);
+      $("stats").hidden = false;
     }
 
     const r = d.referrer;
