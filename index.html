@@ -173,14 +173,8 @@ button{font:inherit; cursor:pointer; border:none}
 .hook-line b{color:var(--gold)}
 .hook .btn{margin:0; padding:11px 14px; font-size:14px; border-radius:12px; width:auto}
 
-.stats{display:flex; gap:26px; margin:0 0 20px}
-.stat b{
-  display:block;
-  font-family:"Figtree",system-ui,sans-serif;
-  font-weight:800; font-size:28px; letter-spacing:-.035em; line-height:1;
-  font-variant-numeric:tabular-nums;
-}
-.stat span{display:block; font-size:12.5px; color:var(--muted); margin-top:3px}
+.stats{font-size:16.5px; color:var(--muted); margin:0 0 12px; letter-spacing:-.01em}
+.stats b{color:var(--text); font-weight:800; font-variant-numeric:tabular-nums}
 
 .rival{font-size:14.5px; font-weight:600; max-width:32ch; margin:-12px auto 22px}
 .rival b{color:var(--gold)}
@@ -426,10 +420,7 @@ button{font:inherit; cursor:pointer; border:none}
         <button class="btn" id="hook-go">Beat that score</button>
       </div>
     </div>
-    <div class="stats" id="stats" hidden>
-      <div class="stat"><b id="stat-players">0</b><span>players</span></div>
-      <div class="stat"><b id="stat-colleges">0</b><span>colleges</span></div>
-    </div>
+    <p class="stats" id="stats" hidden><b id="stat-players">0</b> players<span id="stat-colleges-wrap"> from <b id="stat-colleges">0</b> colleges</span></p>
     <h1>Find your smart!</h1>
     <p class="sub">Pick your smart in the next page</p>
 
@@ -765,8 +756,9 @@ const PROOF_MIN_PLAYERS = 20;   // below this the number undersells rather than 
     landingData = d;
 
     if(d.players >= PROOF_MIN_PLAYERS){
-      $("stat-players").textContent = d.players.toLocaleString("en-IN");
-      $("stat-colleges").textContent = String(d.colleges);
+      $("stat-players").textContent = d.players.toLocaleString("en-IN") + "+";
+      $("stat-colleges").textContent = d.colleges + "+";
+      $("stat-colleges-wrap").hidden = d.colleges < 2;
       $("stats").hidden = false;
     }
 
