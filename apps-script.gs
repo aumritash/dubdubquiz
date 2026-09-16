@@ -59,12 +59,88 @@ function doPost(e) {
   }
 }
 
-// ?leaderboard=<category>&lead=<id> returns the ranked board for that
-// category. Any other GET just confirms the deployment is live.
+// ?leaderboard=<category>&lead=<id> returns the ranked board for that category.
+// ?landing=1&ref=<id> returns the counts for the landing page and, if a
+// referral code is given, that player's best run. Any other GET just
+// confirms the deployment is live.
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.leaderboard) return reply(leaderboard(String(p.leaderboard), String(p.lead || '')));
+  if (p.landing) return reply(landing(String(p.ref || '')));
   return reply({ ok: true, service: 'dubdub-quiz', tabs: Object.keys(TABS) });
+}
+
+/**
+ * Every visitor hits this, so it is cached for a minute: the counts under
+ * one key, each referrer's best run under its own. Like the leaderboard it
+ * only ever returns a display name, category, score and time.
+ */
+function landing(ref) {
+  var cache = CacheService.getScriptCache();
+
+  var counts = cache.get('counts');
+  if (counts) {
+    counts = JSON.parse(counts);
+  } else {
+    var all = readSheets();
+    var players = {}, colleges = {};
+    all.attempts.forEach(function (a) {
+      players[a.lead] = 1;
+      var l = all.leads[a.lead];
+      if (l && l.college) colleges[l.college.toLowerCase()] = 1;
+    });
+    counts = { players: Object.keys(players).length, colleges: Object.keys(colleges).length };
+    cache.put('counts', JSON.stringify(counts), 60);
+  }
+
+  var referrer = null;
+  if (ref) {
+    var hit = cache.get('ref:' + ref);
+    if (hit) {
+      referrer = JSON.parse(hit);
+    } else {
+      var data = readSheets();
+      var lead = data.leads[ref];
+      if (lead) {
+        var best = null;
+        data.attempts.forEach(function (a) {
+          if (a.lead !== ref) return;
+          if (!best || a.score > best.score || (a.score === best.score && a.time < best.time)) best = a;
+        });
+        if (best) referrer = { name: lead.name, category: best.category, score: best.score,
+                               time: isFinite(best.time) ? best.time : null };
+      }
+      cache.put('ref:' + ref, JSON.stringify(referrer), 60);
+    }
+  }
+
+  return { ok: true, players: counts.players, colleges: counts.colleges, referrer: referrer };
+}
+
+// One read of both tabs, in the shapes the landing needs.
+function readSheets() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var leads = {}, attempts = [];
+
+  var ls = ss.getSheetByName('leads');
+  if (ls && ls.getLastRow() > 1) {
+    var iId = TABS.leads.indexOf('id'), iName = TABS.leads.indexOf('name'), iCol = TABS.leads.indexOf('city');
+    ls.getRange(2, 1, ls.getLastRow() - 1, TABS.leads.length).getValues().forEach(function (r) {
+      leads[String(r[iId])] = { name: displayName(r[iName]), college: String(r[iCol] || '').replace(/\s+/g, ' ').trim() };
+    });
+  }
+
+  var as = ss.getSheetByName('attempts');
+  if (as && as.getLastRow() > 1) {
+    var iLead = TABS.attempts.indexOf('lead_id'), iCat = TABS.attempts.indexOf('category'),
+        iScore = TABS.attempts.indexOf('score'), iTime = TABS.attempts.indexOf('time_seconds');
+    as.getRange(2, 1, as.getLastRow() - 1, TABS.attempts.length).getValues().forEach(function (r) {
+      var time = Number(r[iTime]);
+      attempts.push({ lead: String(r[iLead]), category: String(r[iCat]),
+                      score: Number(r[iScore]) || 0, time: time > 0 ? time : Infinity });
+    });
+  }
+  return { leads: leads, attempts: attempts };
 }
 
 /**
