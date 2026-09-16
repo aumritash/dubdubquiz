@@ -183,21 +183,6 @@ button{font:inherit; cursor:pointer; border:none}
 .proof{color:var(--muted); font-size:15px; margin-bottom:22px}
 .proof b{color:var(--text); font-weight:700}
 
-.tiles{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-.tile{
-  display:flex; flex-direction:column; align-items:center; gap:4px;
-  padding:14px 10px 12px;
-  background:var(--surface); color:var(--text);
-  border:1.5px solid var(--line); border-radius:var(--r-card);
-  transition:transform .12s ease, border-color .12s ease;
-}
-.tile:hover,.tile:focus-visible{border-color:var(--primary); outline:none}
-.tile:active{transform:scale(.97)}
-.tile img{width:100%; max-width:150px; display:block; filter:drop-shadow(0 8px 18px rgba(249,105,33,.28))}
-.tile b{font-weight:700; font-size:15px; letter-spacing:-.01em}
-.tile:last-child{grid-column:1 / -1}
-.tile:last-child img{max-width:150px}
-
 .rival{font-size:14.5px; font-weight:600; max-width:32ch; margin:-12px auto 22px}
 .rival b{color:var(--gold)}
 
@@ -433,10 +418,18 @@ button{font:inherit; cursor:pointer; border:none}
     <p id="tagline" hidden>10 questions. One sticker.</p>
   </div>
 
-  <!-- 3b. CLAIM (after the quiz, before the reveal) -->
-  <section class="screen" id="s-details">
-    <h1>Claim your sticker</h1>
-    <p class="sub">Add your details to reveal it and enter the ₹10,000 draw.</p>
+  <!-- 1. DETAILS -->
+  <section class="screen on" id="s-details">
+    <div class="hook" id="hook" hidden>
+      <img id="hook-art" alt="">
+      <div>
+        <p class="hook-line" id="hook-line"></p>
+        <button class="btn" id="hook-go">Beat that score</button>
+      </div>
+    </div>
+    <span class="prize-pill">✦ Win up to ₹10,000</span>
+    <h1>Find your smart!</h1>
+    <p class="proof" id="proof">Ten questions. One sticker. Five ways to prove it.</p>
 
     <div class="field">
       <label for="f-name">Name</label>
@@ -458,22 +451,14 @@ button{font:inherit; cursor:pointer; border:none}
     </div>
 
     <p class="err" id="err"></p>
-    <button class="btn" id="claim">Reveal my sticker</button>
+    <button class="btn" id="go-cats">Pick a category</button>
   </section>
 
-  <!-- 1. LANDING -->
-  <section class="screen on" id="s-cats">
-    <div class="hook" id="hook" hidden>
-      <img id="hook-art" alt="">
-      <div>
-        <p class="hook-line" id="hook-line"></p>
-        <button class="btn" id="hook-go">Beat that score</button>
-      </div>
-    </div>
-    <span class="prize-pill">✦ Win up to ₹10,000</span>
-    <h1>Find your smart!</h1>
-    <p class="proof" id="proof">Ten questions. One sticker. Five ways to prove it.</p>
-    <div class="tiles" id="cat-list"></div>
+  <!-- 2. CATEGORY -->
+  <section class="screen" id="s-cats">
+    <h1 id="greet">Pick your category</h1>
+    <p class="sub">Five rounds on the menu. Ten questions each, no going back.</p>
+    <div class="cats" id="cat-list"></div>
   </section>
 
   <!-- 3. QUIZ -->
@@ -766,6 +751,7 @@ if(REF) post("referral_visits", { ref: REF, visit_id: uid() });
    the proof line, and the referring friend's best run for the hook. Never
    blocks the screen, and a backend that predates it just leaves the defaults. */
 let landingData = null;
+let hookCategory = null;   // set when they accept a friend's challenge before filling the form
 const PROOF_MIN_PLAYERS = 20;   // below this the number undersells rather than sells
 
 (async function loadLanding(){
@@ -793,7 +779,7 @@ const PROOF_MIN_PLAYERS = 20;   // below this the number undersells rather than 
       const line = $("hook-line"); line.replaceChildren();
       const who = document.createElement("b"); who.textContent = r.name;
       line.append(who, ` scored ${r.score}/10 in ${r.category} in ${fmtTime(r.time)}. Think you can beat that?`);
-      $("hook-go").onclick = () => startQuiz(key);
+      $("hook-go").onclick = () => { hookCategory = key; $("f-name").focus(); };
       $("hook").hidden = false;
     }
   } catch(e){ console.warn("landing data failed:", e); }
@@ -807,7 +793,7 @@ function fmtTime(sec){
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
   $(id).classList.add("on");
-  $("tagline").hidden = (id === "s-cats");   // the landing has its own headline
+  $("tagline").hidden = (id === "s-details");   // held back on the opening screen
   window.scrollTo({top:0});
 }
 
@@ -816,7 +802,6 @@ function show(id){
    ========================================================= */
 const PHONE_CHARS = /^[\d\s+\-()]{7,}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
 
 /* Students mostly know colleges by their initials, and the native datalist
    neither matches those nor renders reliably inside the WhatsApp and
@@ -914,7 +899,7 @@ function acMatches(query){
   });
 })();
 
-$("claim").addEventListener("click", () => {
+$("go-cats").addEventListener("click", () => {
   const name = $("f-name").value.trim();
   const contact = $("f-contact").value.trim();
   const college = $("f-college").value.trim();
@@ -947,10 +932,14 @@ $("claim").addEventListener("click", () => {
     referred_by: REF
   });
 
-  revealResult();
+  $("greet").textContent = firstName() + ", pick your category";
+  if(hookCategory){ startQuiz(hookCategory); hookCategory = null; }
+  else show("s-cats");
 
   function fail(msg){ err.textContent = msg; err.classList.add("on"); }
 });
+
+function firstName(){ return player.name.split(/\s+/)[0]; }
 
 /* =========================================================
    2. CATEGORIES
@@ -958,8 +947,10 @@ $("claim").addEventListener("click", () => {
 const list = $("cat-list");
 Object.entries(CATS).forEach(([key, c]) => {
   const b = document.createElement("button");
-  b.className = "tile";
-  b.innerHTML = `<img src="${ART[key]}" alt=""><b>${c.name}</b>`;
+  b.className = "cat";
+  b.style.setProperty("--tint", TINTS[key]);
+  b.innerHTML = `<img class="ico" src="${ICONS[key]}" alt="">
+                 <span><b>${c.name}</b><small>${c.blurb}</small></span>`;
   b.addEventListener("click", () => startQuiz(key));
   list.appendChild(b);
 });
@@ -1069,11 +1060,7 @@ function finish(){
   st.style.animation = "";
 
   renderRival();
-
-  // Details are asked for after the quiz, as the price of the reveal. On a
-  // repeat play we already have them, so go straight through.
-  if(player.id) revealResult();
-  else show("s-details");
+  revealResult();
 }
 
 function revealResult(){
@@ -1478,12 +1465,12 @@ $("copy").addEventListener("click", async () => {
   logShare("copy");
 });
 
-$("again").addEventListener("click", () => show("s-cats"));   // same player, details kept
-$("restart").addEventListener("click", () => {                // a new player: forget everything
+$("again").addEventListener("click", () => show("s-cats"));
+$("restart").addEventListener("click", () => {
   player.id = ""; player.name = ""; player.contact = ""; player.college = "";
   $("f-name").value = ""; $("f-contact").value = ""; $("f-college").value = "";
   $("err").classList.remove("on");
-  show("s-cats");
+  show("s-details");
 });
 </script>
 </body>
