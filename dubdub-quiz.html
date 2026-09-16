@@ -1114,15 +1114,15 @@ function renderCollegeBoard(data){
    5. SHARE
    ========================================================= */
 const SHARE_URL = "https://find-your-smart.godubdub.com";  // where the share link points
-const SHARE_CTA = "find your smart here!";       // change the caption line here
+const SHARE_CTA = "Find your smart here!";       // change the caption line here
 
 function shareLink(){
   return SHARE_URL + (player.id ? "?r=" + encodeURIComponent(player.id) : "");
 }
 
 function caption(){
-  const { cat, tier } = current;
-  return `${tier.title} · ${score}/${cat.qs.length} on ${cat.name} in ${fmtTime(elapsedSec)}.\n\n${SHARE_CTA} ${shareLink()}`;
+  const { cat } = current;
+  return `I am ${cat.name} smart! · ${score}/${cat.qs.length} in ${fmtTime(elapsedSec)}.\n\n${SHARE_CTA} ${shareLink()}`;
 }
 
 /* Logs a real share action (not just opening the panel) and confirms
